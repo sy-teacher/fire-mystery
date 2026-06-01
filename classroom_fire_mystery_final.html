@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔍 교실 화재 미스터리</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1a1a2e; --surface:#16213e; --border:#0f3460;
+  --red:#e94560; --gold:#f5a623; --green:#2ecc71; --blue:#3498db;
+  --text:#eee; --muted:#999;
+}
+body{font-family:'Nanum Gothic','Apple SD Gothic Neo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.scene{display:none;min-height:100vh;}
+.scene.active{display:flex;flex-direction:column;}
+
+/* ══════════ LOGIN ══════════ */
+#s-login{align-items:center;justify-content:center;padding:30px 16px;}
+.login-card{background:var(--surface);border:2px solid var(--border);border-radius:24px;
+  padding:40px 44px;width:100%;max-width:480px;box-shadow:0 0 50px rgba(15,52,96,.6);}
+.login-card .logo{font-size:3rem;text-align:center;margin-bottom:8px;}
+.login-card h1{text-align:center;font-size:1.5rem;font-weight:800;margin-bottom:4px;}
+.login-card .sub{text-align:center;color:var(--muted);font-size:.88rem;margin-bottom:28px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:.85rem;font-weight:700;color:var(--gold);margin-bottom:6px;}
+.field select,.field input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--border);
+  border-radius:10px;padding:12px 14px;color:var(--text);font-family:inherit;font-size:.95rem;}
+.field select:focus,.field input:focus{outline:none;border-color:var(--gold);}
+.field select option{background:#16213e;}
+.field-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--red),#c0392b);
+  border:none;border-radius:12px;color:#fff;font-family:inherit;font-size:1rem;font-weight:800;
+  cursor:pointer;margin-top:8px;transition:transform .2s,box-shadow .2s;}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(233,69,96,.4);}
+
+/* ══════════ FIRE ALARM ══════════ */
+#s-fire{align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#1a0000,#400000);position:relative;overflow:hidden;}
+.alarm-bg{position:absolute;inset:0;animation:alarmFlash 1s infinite;}
+@keyframes alarmFlash{0%,100%{background:rgba(220,0,0,.25);}50%{background:rgba(220,0,0,.0);}}
+.fire-content{position:relative;z-index:2;text-align:center;padding:20px;}
+.fire-icon{font-size:6rem;animation:fireShake .4s infinite alternate;}
+@keyframes fireShake{0%{transform:scale(1) rotate(-3deg);}100%{transform:scale(1.1) rotate(3deg);}}
+.fire-title{font-size:3.5rem;font-weight:800;color:#ff3333;
+  text-shadow:0 0 20px rgba(255,0,0,.8),0 0 40px rgba(255,100,0,.6);
+  animation:titlePulse .8s infinite alternate;}
+@keyframes titlePulse{0%{transform:scale(1);}100%{transform:scale(1.04);}}
+.fire-loc{font-size:1.2rem;color:#ffaa44;margin-top:12px;animation:fadeIn 1s .5s both;}
+.fire-sub{font-size:.95rem;color:#ffcc88;margin-top:8px;animation:fadeIn 1s 1s both;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.alarm-badge{display:inline-block;background:#ff2222;color:#fff;font-weight:800;
+  padding:8px 22px;border-radius:30px;font-size:.9rem;margin-top:20px;
+  animation:badgePulse .5s infinite alternate;}
+@keyframes badgePulse{0%{box-shadow:0 0 10px #ff0000;}100%{box-shadow:0 0 30px #ff0000,0 0 60px #ff000055;}}
+.fire-sparks{position:absolute;inset:0;pointer-events:none;}
+.spark{position:absolute;font-size:1.5rem;animation:sparkFloat linear infinite;}
+@keyframes sparkFloat{0%{transform:translateY(100vh) rotate(0deg);opacity:1;}
+  100%{transform:translateY(-100px) rotate(360deg);opacity:0;}}
+
+/* ══════════ REQUEST ══════════ */
+#s-request{align-items:center;justify-content:center;padding:30px 16px;
+  background:radial-gradient(circle at 30% 50%,rgba(15,52,96,.4),transparent);}
+.req-card{background:var(--surface);border:2px solid var(--border);border-radius:24px;
+  padding:36px 40px;max-width:660px;width:100%;}
+.req-card .step-label{color:var(--red);font-size:.82rem;font-weight:700;letter-spacing:2px;margin-bottom:10px;}
+.req-card h2{font-size:1.4rem;font-weight:800;margin-bottom:20px;color:var(--gold);}
+.dialog-box{background:rgba(255,255,255,.04);border-left:4px solid var(--gold);
+  border-radius:0 14px 14px 0;padding:18px 20px;margin-bottom:16px;font-size:.93rem;line-height:1.9;}
+.dialog-box .speaker{font-weight:800;color:var(--gold);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
+.dialog-lines{overflow:hidden;}
+.dialog-line{opacity:0;transform:translateY(8px);transition:all .4s;margin-bottom:6px;line-height:1.8;}
+.dialog-line.show{opacity:1;transform:translateY(0);}
+.req-info{background:rgba(233,69,96,.1);border:1px dashed var(--red);border-radius:12px;
+  padding:14px 18px;font-size:.88rem;line-height:1.8;margin-bottom:20px;}
+.req-info strong{color:var(--red);}
+.btn-accept{padding:14px 32px;background:linear-gradient(135deg,var(--gold),#e67e22);border:none;
+  border-radius:12px;color:#1a1a2e;font-family:inherit;font-size:1rem;font-weight:800;cursor:pointer;
+  transition:all .2s;display:block;margin:0 auto;}
+.btn-accept:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(245,166,35,.4);}
+
+/* ══════════ EXPLORE ══════════ */
+#s-explore{padding:0;background:var(--bg);}
+.explore-layout{display:grid;grid-template-columns:1fr 280px;height:100vh;min-height:600px;}
+.classroom-area{display:flex;flex-direction:column;overflow:hidden;}
+.classroom-header{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.classroom-header h3{font-size:1rem;font-weight:800;}
+.progress-pills{display:flex;gap:6px;margin-left:auto;}
+.pill{width:28px;height:10px;border-radius:5px;background:rgba(255,255,255,.1);transition:background .3s;}
+.pill.done{background:var(--green);}
+.classroom-wrap{flex:1;overflow:auto;padding:16px;display:flex;align-items:center;justify-content:center;}
+.classroom{position:relative;width:720px;max-width:100%;aspect-ratio:720/480;
+  border-radius:16px;overflow:hidden;}
+.obj{position:absolute;cursor:pointer;display:flex;flex-direction:column;align-items:center;
+  gap:3px;transition:transform .2s,filter .2s;z-index:10;}
+.obj:hover{transform:scale(1.15) translateY(-4px);filter:drop-shadow(0 0 8px rgba(245,166,35,.7));}
+.obj.examined{filter:brightness(.7);}
+.obj.examined::after{content:'✓';position:absolute;top:-8px;right:-8px;
+  background:var(--green);color:#fff;width:18px;height:18px;border-radius:50%;
+  font-size:.7rem;display:flex;align-items:center;justify-content:center;font-weight:800;}
+.obj-icon{font-size:1.9rem;line-height:1;}
+.obj-label{font-size:.6rem;font-weight:700;background:rgba(0,0,0,.6);
+  padding:2px 6px;border-radius:10px;white-space:nowrap;}
+.clue-sidebar{background:var(--surface);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;}
+.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.sidebar-header h4{font-size:.9rem;font-weight:800;color:var(--gold);}
+.sidebar-header p{font-size:.75rem;color:var(--muted);margin-top:2px;}
+.clue-list{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.clue-item{background:rgba(255,255,255,.05);border-left:3px solid var(--border);
+  border-radius:0 8px 8px 0;padding:10px 12px;font-size:.75rem;line-height:1.6;opacity:.5;transition:opacity .3s;}
+.clue-item.active{opacity:1;border-left-color:var(--green);}
+.clue-item .clue-name{font-weight:800;color:var(--gold);margin-bottom:3px;}
+.clue-item .clue-hint{color:var(--blue);font-size:.72rem;}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-conclude{width:100%;padding:12px;background:linear-gradient(135deg,var(--red),#c0392b);
+  border:none;border-radius:10px;color:#fff;font-family:inherit;font-size:.88rem;font-weight:800;
+  cursor:pointer;transition:all .2s;opacity:.4;pointer-events:none;min-height:48px;}
+.btn-conclude.ready{opacity:1;pointer-events:all;}
+.btn-conclude.ready:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(233,69,96,.4);}
+
+/* ══════════ MODAL ══════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-card{background:#1e2d4a;border:2px solid var(--border);border-radius:20px;
+  padding:28px 30px;max-width:500px;width:100%;transform:translateY(20px);transition:transform .25s;}
+.modal-overlay.open .modal-card{transform:translateY(0);}
+.modal-icon{font-size:3.5rem;text-align:center;margin-bottom:10px;}
+.modal-name{font-size:1.2rem;font-weight:800;text-align:center;color:var(--gold);margin-bottom:16px;}
+.modal-body{font-size:.9rem;line-height:1.9;background:rgba(255,255,255,.04);
+  border-radius:12px;padding:16px;margin-bottom:14px;}
+.modal-hint{background:rgba(52,152,219,.12);border:1px solid var(--blue);border-radius:10px;
+  padding:12px 14px;font-size:.82rem;color:#aad4f5;line-height:1.7;}
+.btn-modal-close{width:100%;padding:12px;background:var(--border);border:none;border-radius:10px;
+  color:#fff;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:14px;
+  transition:background .2s;min-height:48px;}
+.btn-modal-close:hover{background:#1a4a7a;}
+
+/* ══════════ CONCLUDE ══════════ */
+#s-conclude{align-items:center;justify-content:center;padding:30px 16px;}
+.conclude-card{background:var(--surface);border:2px solid var(--border);border-radius:24px;
+  padding:36px 40px;max-width:680px;width:100%;}
+.conclude-card h2{font-size:1.35rem;font-weight:800;color:var(--red);margin-bottom:6px;}
+.conclude-card .sub{color:var(--muted);font-size:.85rem;margin-bottom:24px;}
+.suspect-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;}
+.suspect-btn{background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:16px 10px;cursor:pointer;text-align:center;transition:all .2s;min-height:48px;}
+.suspect-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2);}
+.suspect-btn.selected{background:rgba(233,69,96,.15);border-color:var(--red);box-shadow:0 0 14px rgba(233,69,96,.3);}
+.suspect-btn .s-icon{font-size:2rem;display:block;margin-bottom:6px;}
+.suspect-btn .s-name{font-size:.8rem;font-weight:700;}
+.reason-area{margin-bottom:18px;}
+.reason-area label{display:block;font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:8px;}
+.reason-area textarea{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--border);
+  border-radius:12px;padding:14px;color:var(--text);font-family:inherit;font-size:.88rem;
+  line-height:1.8;resize:vertical;min-height:130px;}
+.reason-area textarea:focus{outline:none;border-color:var(--gold);}
+.char-counter{font-size:.75rem;color:var(--muted);text-align:right;margin-top:4px;}
+.char-counter.warn{color:var(--red);}
+.char-counter.ok{color:var(--green);}
+.submit-note{font-size:.8rem;color:var(--muted);text-align:center;margin-bottom:10px;}
+
+/* ══════════ DONE ══════════ */
+#s-done{align-items:center;justify-content:center;padding:30px 16px;}
+.done-card{background:var(--surface);border:2px solid var(--border);border-radius:24px;
+  padding:36px 40px;max-width:600px;width:100%;text-align:center;}
+.done-icon{font-size:4rem;margin-bottom:10px;animation:bounceIn .6s;}
+@keyframes bounceIn{0%{transform:scale(.5);opacity:0;}70%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+.done-title{font-size:1.6rem;font-weight:800;margin-bottom:6px;}
+.done-title.correct{color:var(--gold);}
+.done-title.wrong{color:var(--muted);}
+.done-student{font-size:.9rem;color:var(--muted);margin-bottom:20px;}
+.result-box{background:rgba(255,255,255,.04);border-radius:14px;padding:18px 22px;margin-bottom:18px;text-align:left;}
+.result-row{display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);}
+.result-row:last-child{border-bottom:none;}
+.result-label{font-size:.85rem;color:var(--muted);}
+.result-val{font-size:.9rem;font-weight:700;}
+.result-val.green{color:var(--green);}
+.result-val.red{color:var(--red);}
+.explain-box{background:rgba(52,152,219,.1);border:1px solid var(--blue);border-radius:12px;
+  padding:16px 18px;font-size:.85rem;line-height:1.8;text-align:left;margin-bottom:16px;color:#aad4f5;}
+.explain-box h5{color:var(--blue);font-size:.88rem;margin-bottom:8px;}
+.sheets-note{font-size:.78rem;color:var(--muted);padding:10px 14px;background:rgba(255,255,255,.03);
+  border-radius:8px;margin-bottom:14px;}
+.btn-replay{padding:12px 28px;background:var(--border);border:none;border-radius:10px;
+  color:var(--text);font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;min-height:48px;}
+
+/* ══════════ MOBILE ══════════ */
+@media (max-width:600px) {
+  .login-card { padding: 28px 20px; }
+  .field-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fire-title { font-size: 2.2rem; }
+  .fire-icon { font-size: 4rem; }
+  .req-card { padding: 24px 18px; }
+  .explore-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    height: auto;
+    min-height: 100vh;
+  }
+  .classroom-wrap { padding: 10px; min-height: 320px; overflow: auto; }
+  .classroom { aspect-ratio: 4/3; }
+  .obj-icon { font-size: 1.4rem; }
+  .obj-label { font-size: 0.55rem; }
+  .clue-sidebar {
+    border-left: none;
+    border-top: 1px solid var(--border);
+    max-height: 200px;
+  }
+  .suspect-grid { grid-template-columns: repeat(2,1fr); }
+  .conclude-card { padding: 24px 16px; }
+  .done-card { padding: 28px 18px; }
+  .done-title { font-size: 1.3rem; }
+  .modal-card { padding: 22px 18px; }
+  .btn-main, .btn-accept, .btn-modal-close, .btn-replay { min-height: 48px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="s-login" class="scene active">
+  <div class="login-card">
+    <div class="logo">🕵️</div>
+    <h1>교실 화재 미스터리</h1>
+    <p class="sub">탐정 신분증을 등록하고 사건을 해결하세요</p>
+    <div class="field-row">
+      <div class="field">
+        <label>학년</label>
+        <select id="lg">
+          <option value="">학년</option>
+          <option>1</option><option selected>2</option><option>3</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>반</label>
+        <select id="lc">
+          <option value="">반</option>
+          <option>1</option><option>2</option><option>3</option><option>4</option>
+          <option>5</option><option>6</option><option>7</option><option>8</option>
+          <option>9</option><option>10</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>번호</label>
+        <select id="ln"><option value="">번호</option></select>
+      </div>
+    </div>
+    <div class="field">
+      <label>이름</label>
+      <input type="text" id="lname" placeholder="이름을 입력하세요" maxlength="10">
+    </div>
+    <button class="btn-main" onclick="doLogin()">🔍 탐정 등록 완료 →</button>
+  </div>
+</div>
+
+<!-- ═══ FIRE ═══ -->
+<div id="s-fire" class="scene">
+  <div class="alarm-bg"></div>
+  <div class="fire-sparks" id="sparks"></div>
+  <div class="fire-content">
+    <div class="fire-icon">🔥</div>
+    <div class="fire-title">화재 발생!</div>
+    <div class="fire-loc">📍 중학교 3학년 2반 교실</div>
+    <div class="fire-sub">오늘 오후 2시 47분 — 원인 불명</div>
+    <div class="alarm-badge">🚨 긴급 신고 접수 중</div>
+    <div style="margin-top:28px;font-size:.85rem;color:#ff9966;animation:fadeIn 1s 3s both;">(클릭하여 계속)</div>
+  </div>
+</div>
+
+<!-- ═══ REQUEST ═══ -->
+<div id="s-request" class="scene">
+  <div class="req-card">
+    <div class="step-label">STEP 1 / 4 — 사건 의뢰</div>
+    <h2>🏫 학교장의 긴급 의뢰</h2>
+    <div class="dialog-box">
+      <div class="speaker">👨‍💼 이준혁 교장</div>
+      <div class="dialog-lines" id="dialog-lines"></div>
+    </div>
+    <div class="req-info" id="req-info" style="display:none;">
+      <strong>📋 의뢰 내용</strong><br>
+      사건 일시: 오후 2시 47분 (방과 후)<br>
+      사건 장소: 3학년 2반 교실<br>
+      발화 지점: 창문 옆 첫 번째 책상<br>
+      특이사항: 전기 합선·방화 흔적 없음. 교실 내 다양한 물건 발견.<br>
+      <strong>목표: 화재 원인이 된 물건을 찾아 이유와 함께 보고하라!</strong>
+    </div>
+    <button class="btn-accept" id="btn-accept" style="display:none;" onclick="goExplore()">✅ 의뢰를 수락한다 →</button>
+  </div>
+</div>
+
+<!-- ═══ EXPLORE ═══ -->
+<div id="s-explore" class="scene">
+  <div class="explore-layout">
+    <div class="classroom-area">
+      <div class="classroom-header">
+        <span>🔍</span>
+        <h3>3학년 2반 교실 — 현장 조사</h3>
+        <div class="progress-pills" id="prog-pills"></div>
+      </div>
+      <div class="classroom-wrap">
+        <div class="classroom" id="classroom"></div>
+      </div>
+    </div>
+    <div class="clue-sidebar">
+      <div class="sidebar-header">
+        <h4>📓 탐정 수첩</h4>
+        <p>물건을 클릭해 조사하세요</p>
+      </div>
+      <div class="clue-list" id="clue-list"></div>
+      <div class="sidebar-footer">
+        <div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;text-align:center;" id="examine-count">0 / 6 조사 완료</div>
+        <button class="btn-conclude" id="btn-conclude" onclick="goConclude()">⚖️ 범인을 지목하라!</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-icon" id="m-icon"></div>
+    <div class="modal-name" id="m-name"></div>
+    <div class="modal-body" id="m-body"></div>
+    <div class="modal-hint" id="m-hint"></div>
+    <button class="btn-modal-close" onclick="closeModal()">📓 단서 기록하고 계속 조사</button>
+  </div>
+</div>
+
+<!-- ═══ CONCLUDE ═══ -->
+<div id="s-conclude" class="scene">
+  <div class="conclude-card">
+    <div style="font-size:.8rem;color:var(--red);font-weight:700;letter-spacing:2px;margin-bottom:6px;">STEP 3 / 4 — 최종 결론</div>
+    <h2>⚖️ 화재의 원인을 밝혀라!</h2>
+    <p class="sub">조사한 단서를 바탕으로 범인 물건을 선택하고, 이유를 줄글로 작성하세요.</p>
+    <div style="font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:10px;">🔎 어떤 물건이 화재를 일으켰는가?</div>
+    <div class="suspect-grid" id="suspect-grid"></div>
+    <div class="reason-area">
+      <label>✏️ 왜 그 물건이 화재 원인이라고 생각하는가? (30자 이상 작성)</label>
+      <textarea id="reason-txt" placeholder="이 물건이 화재를 일으킨 이유를 구체적으로 설명해주세요. 물건의 특성, 빛과의 관계, 발화 원리를 포함하면 좋습니다." oninput="updateCharCount()"></textarea>
+      <div class="char-counter warn" id="char-counter">0자 입력 (최소 30자)</div>
+    </div>
+    <div class="submit-note" id="submit-note">💡 물건을 선택하고 이유를 30자 이상 작성해야 제출할 수 있습니다.</div>
+    <button class="btn-main" id="btn-submit" onclick="doSubmit()" style="opacity:.4;pointer-events:none;">📤 최종 보고서 제출</button>
+  </div>
+</div>
+
+<!-- ═══ DONE ═══ -->
+<div id="s-done" class="scene">
+  <div class="done-card">
+    <div class="done-icon" id="done-icon"></div>
+    <div class="done-title" id="done-title"></div>
+    <div class="done-student" id="done-student"></div>
+    <div class="result-box" id="result-box"></div>
+    <div class="explain-box">
+      <h5>📚 정답 해설 — 유리구슬과 볼록 렌즈</h5>
+      유리구슬은 <strong>가운데가 두껍고 가장자리가 얇은</strong> 둥근 형태입니다.
+      이 형태는 <strong>볼록 렌즈</strong>와 같이 작용하여, 평행하게 들어오는 햇빛을
+      굴절시켜 <strong>초점이라는 한 점에 집중</strong>시킵니다.
+      그 초점의 온도는 종이의 발화점(약 230°C)을 초과할 수 있어 화재를 일으킵니다.
+      맑은 날 창가에 유리구슬, 둥근 어항, 투명 물통을 두는 것은 위험합니다!
+    </div>
+    <div class="sheets-note" id="sheets-note"></div>
+    <button class="btn-replay" onclick="restart()">🔄 다시 시작</button>
+  </div>
+</div>
+
+<!-- ═══ WATERMARK ═══ -->
+<div style="position:fixed;bottom:10px;right:16px;font-size:0.75rem;
+  color:rgba(255,255,255,0.25);font-family:'Nanum Gothic',sans-serif;
+  pointer-events:none;z-index:9999;">
+  made by 수연쌤
+</div>
+
+<script>
+// ════════════════════════════════════════
+// ⚙️ Google Sheets 웹앱 URL 입력
+// ════════════════════════════════════════
+const SHEETS_URL = ''; // 예: 'https://script.google.com/macros/s/xxxxx/exec'
+
+// ════════════════════════════════════════
+//  게임 상태
+// ════════════════════════════════════════
+let student = {}, selected = null, examined = {};
+
+const OBJECTS = {
+  window: {
+    icon:'🪟', name:'남향 창문', short:'창문',
+    pos:{top:'12%',left:'5%'},
+    desc:`사건 당일 맑은 오후 2시 47분, 이 남향 창문으로 강한 햇빛이 비스듬히 교실 안으로 깊숙이 들어오고 있었다.
+창문 바로 오른쪽 첫 번째 책상 부근에서 불에 탄 흔적이 확인되었다.
+외부에서 침입한 흔적은 전혀 없다.`,
+    hint:'📍 단서: 빛의 방향과 위치가 중요하다. 햇빛이 들어오는 각도를 기억해 두자.'
+  },
+  marble: {
+    icon:'🔮', name:'유리구슬', short:'유리구슬',
+    pos:{top:'38%',left:'22%'},
+    desc:`직경 약 2.5cm의 투명한 유리구슬 여러 개. 화재 흔적 바로 옆에서 발견되었다.
+구슬 하나를 들어 햇빛에 비춰보니— 빛이 구슬을 통과하면서 반대편 한 점에 아주 밝고 좁게 집중된다!
+그 점에 종이를 대니 수초 만에 연기가 피어오른다.
+구슬은 가운데가 볼록하고 양쪽이 둥글게 튀어나온 형태다.`,
+    hint:'📍 핵심 단서: 빛을 한 점으로 모은다! 그 점의 에너지는 매우 높다.'
+  },
+  book: {
+    icon:'📚', name:'불탄 교과서', short:'불탄 교과서',
+    pos:{top:'52%',left:'18%'},
+    desc:`과학 교과서 한 권. 표지 오른쪽 윗부분이 동그랗게 새까맣게 탔다.
+탄 모양이 넓게 번진 것이 아니라 직경 1cm 정도의 아주 좁은 한 점에서 시작되어 바깥쪽으로 번진 흔적이다.
+이것은 넓은 면적이 아닌 매우 작고 집중된 에너지 원천이 원인임을 시사한다.
+교과서는 화재의 원인이 아니라 불에 탄 피해물로 추정된다.`,
+    hint:'📍 단서: 탄 모양이 매우 작고 집중적이다. 무언가가 빛을 한 점에 모았을 가능성이 있다.'
+  },
+  stick: {
+    icon:'🪵', name:'나무 막대', short:'나무 막대',
+    pos:{top:'38%',left:'55%'},
+    desc:`미술 공예 시간에 쓰는 길이 30cm의 나무 막대. 불에 타기 쉬운 재질이나, 화재 흔적에서 약 1.5m 떨어진 뒤쪽 책상 위에 있었다.
+나무 막대 자체에는 빛을 굴절하거나 집중시키는 능력이 없다.
+자체적으로 불을 일으킬 수 있는 어떠한 특성도 발견되지 않았다.`,
+    hint:'📍 단서: 가연성 물질이지만 위치와 특성상 화재의 직접 원인은 아닌 것으로 보인다.'
+  },
+  ruler: {
+    icon:'📏', name:'철제 자', short:'철제 자',
+    pos:{top:'52%',left:'60%'},
+    desc:`30cm 금속(스테인리스) 재질의 자. 햇빛이 닿으면 반사가 일어난다.
+그러나 평평한 금속 표면은 빛을 그대로 반사할 뿐, 한 점으로 모으는(수렴) 능력이 없다.
+오히려 빛을 여러 방향으로 퍼뜨린다. 화재 흔적에서 거리가 있는 위치에서 발견되었다.`,
+    hint:'📍 단서: 빛을 반사하지만 수렴시키지 못한다. 화재 원인과는 거리가 멀다.'
+  },
+  lamp: {
+    icon:'💡', name:'형광등', short:'형광등',
+    pos:{top:'5%',left:'48%'},
+    desc:`교실 천장에 달린 형광등 4개. 학교 보안 CCTV 기록과 전기 계량기를 확인한 결과,
+화재 발생 당시 형광등은 모두 꺼진 상태였다. 전기 배선에서 합선 또는 과부하의 흔적도 전혀 발견되지 않았다.
+전기적 원인에 의한 화재는 완전히 배제된다.`,
+    hint:'📍 단서: 화재 당시 꺼져 있었고 전기 이상 없음. 전기 화재 원인은 아니다.'
+  }
+};
+
+const ANSWERS = ['marble'];
+const KEYWORDS = ['볼록','렌즈','수렴','초점','굴절','햇빛','태양','빛','모아','집중','온도','발화','투명','둥글','구형'];
+
+// 번호 select
+(function(){
+  const sel=document.getElementById('ln');
+  for(let i=1;i<=40;i++){const o=document.createElement('option');o.textContent=i;sel.appendChild(o);}
+})();
+
+function showScene(id){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ════════ LOGIN ════════
+function doLogin(){
+  const g=document.getElementById('lg').value;
+  const c=document.getElementById('lc').value;
+  const n=document.getElementById('ln').value;
+  const nm=document.getElementById('lname').value.trim();
+  if(!g||!c||!n||!nm){alert('모든 항목을 입력해 주세요.');return;}
+  student={grade:g,classNum:c,number:n,name:nm};
+  showScene('s-fire');
+  initFire();
+}
+
+// ════════ FIRE ════════
+let fireTimer=null;
+function initFire(){
+  const sp=document.getElementById('sparks');
+  sp.innerHTML='';
+  const emojis=['🔥','💥','✨'];
+  for(let i=0;i<18;i++){
+    const d=document.createElement('div');
+    d.className='spark';
+    d.textContent=emojis[i%3];
+    d.style.left=Math.random()*100+'%';
+    d.style.animationDuration=(2+Math.random()*3)+'s';
+    d.style.animationDelay=(Math.random()*2)+'s';
+    d.style.fontSize=(1+Math.random())+'rem';
+    sp.appendChild(d);
+  }
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    function beep(freq,start,dur){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=freq;g.gain.setValueAtTime(.3,ctx.currentTime+start);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+start+dur);
+      o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+.05);
+    }
+    for(let i=0;i<6;i++){beep(880+i*40,i*.35,.3);}
+  }catch(e){}
+  fireTimer=setTimeout(()=>goRequest(),5000);
+  document.getElementById('s-fire').onclick=()=>{clearTimeout(fireTimer);goRequest();};
+}
+
+// ════════ REQUEST ════════
+const DIALOG=[
+  '탐정님, 큰일이 났습니다. 오늘 오후 방과 후, 3학년 2반 교실에서 갑자기 불이 났어요.',
+  '다행히 빨리 발견해서 큰 불로 번지지는 않았지만… 원인을 도저히 모르겠습니다.',
+  '전기 합선도 아니고, 방화 흔적도 없어요. 교실 안에 있던 어떤 물건이 원인인 것 같은데,',
+  '탐정님이 직접 교실을 조사해서 화재 원인을 밝혀주시겠습니까? 학생들의 안전이 달려 있습니다!'
+];
+let dialogIdx=0;
+function goRequest(){
+  showScene('s-request');
+  dialogIdx=0;
+  document.getElementById('dialog-lines').innerHTML='';
+  document.getElementById('req-info').style.display='none';
+  document.getElementById('btn-accept').style.display='none';
+  nextDialog();
+}
+function nextDialog(){
+  if(dialogIdx>=DIALOG.length){
+    document.getElementById('req-info').style.display='block';
+    setTimeout(()=>document.getElementById('btn-accept').style.display='block',400);
+    return;
+  }
+  const lines=document.getElementById('dialog-lines');
+  const div=document.createElement('div');
+  div.className='dialog-line';
+  div.textContent=DIALOG[dialogIdx];
+  lines.appendChild(div);
+  setTimeout(()=>div.classList.add('show'),50);
+  dialogIdx++;
+  setTimeout(nextDialog,1600);
+}
+
+// ════════ EXPLORE ════════
+function goExplore(){
+  examined={};
+  showScene('s-explore');
+  buildClassroom();
+  buildClueList();
+  buildProgPills();
+  updateExploreUI();
+}
+
+function buildClassroom(){
+  const cls=document.getElementById('classroom');
+  cls.innerHTML=`
+    <div style="position:absolute;inset:0;">
+      <div style="position:absolute;top:0;left:0;right:0;height:44%;background:linear-gradient(180deg,#8fba78,#7aa865);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:56%;background:linear-gradient(180deg,#c9a96e,#b8925c);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:56%;
+        background:repeating-linear-gradient(90deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 89px,rgba(0,0,0,.08) 90px),
+                   repeating-linear-gradient(0deg,rgba(0,0,0,0) 0px,rgba(0,0,0,0) 59px,rgba(0,0,0,.08) 60px);"></div>
+      <div style="position:absolute;top:4%;left:50%;transform:translateX(-50%);
+        width:44%;height:14%;background:#2e5c2e;border:3px solid #1c3a1c;border-radius:6px;
+        display:flex;align-items:center;justify-content:center;color:#6dba6d;font-size:.78rem;font-weight:700;">
+        📝 3학년 2반 과학
+      </div>
+      <div style="position:absolute;top:33%;left:14%;width:18%;height:20%;
+        border:2px dashed #ff4444;border-radius:10px;background:rgba(255,0,0,.07);
+        display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+        <span style="font-size:1.1rem;">🔥</span>
+        <span style="font-size:.55rem;color:#ff6666;font-weight:700;margin-top:2px;">발화 흔적</span>
+      </div>
+      <div style="position:absolute;top:36%;left:13%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;top:36%;left:36%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;top:36%;left:59%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;top:58%;left:13%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;top:58%;left:36%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;top:58%;left:59%;width:17%;height:16%;background:linear-gradient(180deg,#c8905a,#a87040);border:2px solid #7a5030;border-radius:6px;box-shadow:0 4px 10px rgba(0,0,0,.3);"></div>
+      <div style="position:absolute;bottom:5%;left:50%;transform:translateX(-50%);width:22%;height:11%;
+        background:linear-gradient(180deg,#8b6340,#6b4a28);border:2px solid #4a3018;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.4);"></div>
+    </div>`;
+  Object.entries(OBJECTS).forEach(([key,obj])=>{
+    const div=document.createElement('div');
+    div.className='obj'; div.id='obj-'+key;
+    div.style.top=obj.pos.top; div.style.left=obj.pos.left;
+    div.innerHTML=`<span class="obj-icon">${obj.icon}</span><span class="obj-label">${obj.short}</span>`;
+    div.onclick=()=>examineObject(key);
+    cls.appendChild(div);
+  });
+}
+
+function buildClueList(){
+  const ul=document.getElementById('clue-list');
+  ul.innerHTML='';
+  Object.entries(OBJECTS).forEach(([key,obj])=>{
+    const li=document.createElement('div');
+    li.className='clue-item'; li.id='clue-'+key;
+    li.innerHTML=`<div class="clue-name">${obj.icon} ${obj.name}</div>
+      <div style="font-size:.72rem;color:var(--muted);">조사 전</div>
+      <div class="clue-hint" id="ch-${key}" style="display:none;"></div>`;
+    ul.appendChild(li);
+  });
+}
+
+function buildProgPills(){
+  const pp=document.getElementById('prog-pills');
+  pp.innerHTML='';
+  Object.keys(OBJECTS).forEach(k=>{
+    const d=document.createElement('div');
+    d.className='pill'; d.id='pill-'+k;
+    pp.appendChild(d);
+  });
+}
+
+function examineObject(key){
+  const obj=OBJECTS[key];
+  document.getElementById('m-icon').textContent=obj.icon;
+  document.getElementById('m-name').textContent=obj.name;
+  document.getElementById('m-body').textContent=obj.desc;
+  document.getElementById('m-hint').textContent=obj.hint;
+  document.getElementById('modal').classList.add('open');
+  if(!examined[key]){examined[key]=true;updateAfterExamine(key);}
+}
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal'))
+    document.getElementById('modal').classList.remove('open');
+}
+function updateAfterExamine(key){
+  const obj=OBJECTS[key];
+  const ci=document.getElementById('clue-'+key);
+  ci.classList.add('active');
+  ci.querySelector('div:nth-child(2)').textContent='✅ 조사 완료';
+  document.getElementById('ch-'+key).textContent=obj.hint;
+  document.getElementById('ch-'+key).style.display='block';
+  const objEl=document.getElementById('obj-'+key);
+  if(objEl) objEl.classList.add('examined');
+  const pill=document.getElementById('pill-'+key);
+  if(pill) pill.classList.add('done');
+  updateExploreUI();
+}
+function updateExploreUI(){
+  const count=Object.keys(examined).length;
+  const total=Object.keys(OBJECTS).length;
+  document.getElementById('examine-count').textContent=`${count} / ${total} 조사 완료`;
+  const btn=document.getElementById('btn-conclude');
+  if(count>=total){
+    btn.classList.add('ready');
+    btn.textContent='⚖️ 모든 단서 수집 완료! 범인을 지목하라!';
+  }
+}
+
+// ════════ CONCLUDE ════════
+function goConclude(){
+  selected=null;
+  showScene('s-conclude');
+  buildSuspectGrid();
+  document.getElementById('reason-txt').value='';
+  updateCharCount();
+}
+function buildSuspectGrid(){
+  const grid=document.getElementById('suspect-grid');
+  grid.innerHTML='';
+  Object.entries(OBJECTS).forEach(([key,obj])=>{
+    const btn=document.createElement('button');
+    btn.className='suspect-btn'; btn.id='sus-'+key;
+    btn.innerHTML=`<span class="s-icon">${obj.icon}</span><span class="s-name">${obj.name}</span>`;
+    btn.onclick=()=>selectSuspect(key);
+    grid.appendChild(btn);
+  });
+}
+function selectSuspect(key){
+  document.querySelectorAll('.suspect-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('sus-'+key).classList.add('selected');
+  selected=key;
+  checkSubmitReady();
+}
+function updateCharCount(){
+  const len=document.getElementById('reason-txt').value.length;
+  const cc=document.getElementById('char-counter');
+  cc.textContent=`${len}자 입력 (최소 30자)`;
+  cc.className='char-counter '+(len>=30?'ok':'warn');
+  checkSubmitReady();
+}
+function checkSubmitReady(){
+  const len=document.getElementById('reason-txt').value.length;
+  const btn=document.getElementById('btn-submit');
+  if(selected&&len>=30){
+    btn.style.opacity='1'; btn.style.pointerEvents='all';
+    document.getElementById('submit-note').textContent='✅ 제출 준비 완료!';
+  } else {
+    btn.style.opacity='.4'; btn.style.pointerEvents='none';
+    document.getElementById('submit-note').textContent='💡 물건을 선택하고 이유를 30자 이상 작성해야 제출할 수 있습니다.';
+  }
+}
+
+// ════════ SUBMIT ════════
+function doSubmit(){
+  const reason=document.getElementById('reason-txt').value.trim();
+  const isCorrect=ANSWERS.includes(selected);
+  const kw=KEYWORDS.filter(k=>reason.includes(k));
+  const kwScore=Math.min(40,kw.length*8);
+  const totalScore=(isCorrect?60:0)+kwScore;
+  const payload={
+    grade:student.grade, classNum:student.classNum,
+    number:student.number, name:student.name,
+    answer:OBJECTS[selected]?.name||selected,
+    reason, correct:isCorrect, keywordScore:kwScore, totalScore,
+    timestamp:new Date().toISOString()
+  };
+  sendToSheets(payload);
+  showScene('s-done');
+  renderDone(isCorrect,kwScore,totalScore,kw);
+}
+function sendToSheets(data){
+  if(!SHEETS_URL){
+    document.getElementById('sheets-note').textContent='⚠️ Google Sheets 미연동 (SHEETS_URL 설정 필요)';
+    return;
+  }
+  fetch(SHEETS_URL,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+  .then(()=>document.getElementById('sheets-note').textContent='✅ Google Sheets에 제출 완료!')
+  .catch(()=>document.getElementById('sheets-note').textContent='⚠️ 제출 중 오류 발생. 선생님께 문의하세요.');
+}
+
+// ════════ DONE ════════
+function renderDone(isCorrect,kwScore,totalScore,kw){
+  document.getElementById('done-icon').textContent=isCorrect?'🏆':'🔍';
+  const title=document.getElementById('done-title');
+  title.textContent=isCorrect?'사건 해결!':'아직 미해결…';
+  title.className='done-title '+(isCorrect?'correct':'wrong');
+  document.getElementById('done-student').textContent=
+    `${student.grade}학년 ${student.classNum}반 ${student.number}번 ${student.name}`;
+  document.getElementById('result-box').innerHTML=`
+    <div class="result-row">
+      <span class="result-label">선택한 물건</span>
+      <span class="result-val ${isCorrect?'green':'red'}">${OBJECTS[selected]?.icon} ${OBJECTS[selected]?.name} ${isCorrect?'(정답 ✓)':'(오답 ✗)'}</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">정답 여부 점수</span>
+      <span class="result-val ${isCorrect?'green':'red'}">${isCorrect?60:0}점 / 60점</span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">서술 키워드 점수</span>
+      <span class="result-val" style="color:var(--blue);">${kwScore}점 / 40점</span>
+    </div>
+    ${kw.length?`<div class="result-row">
+      <span class="result-label">사용한 핵심 어휘</span>
+      <span class="result-val" style="color:var(--gold);font-size:.8rem;">${kw.join(', ')}</span>
+    </div>`:''}
+    <div class="result-row">
+      <span class="result-label" style="font-weight:800;">총점</span>
+      <span class="result-val" style="font-size:1.1rem;color:var(--gold);">${totalScore}점 / 100점</span>
+    </div>`;
+}
+
+function restart(){
+  selected=null; examined={};
+  showScene('s-login');
+}
+
+document.getElementById('lname').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+</script>
+</body>
+</html>
